@@ -22,6 +22,18 @@ The installer logs in to the registry, generates a local `.env` with fresh
 secrets, pulls the images, and starts the stack. When it finishes, open
 `http://localhost:3000` to run the setup wizard.
 
+### Manual setup (without the installer)
+
+Prefer to do it yourself? Log in to the registry and start the stack manually.
+First copy `.env.example` to `.env` and set `PORTAL_SECRETS_KEY` and
+`PORTAL_INTERNAL_AUTH_KEY` to random values (`openssl rand -hex 32`):
+
+```bash
+docker login docker.clearfox.ai -u <your-username>
+docker compose pull
+docker compose up -d
+```
+
 ### HTTPS (recommended)
 
 ```bash
@@ -42,6 +54,24 @@ docker compose up -d
 
 Your `.env` (with your secrets) is never overwritten. The registry login
 persists, so no need to log in again.
+
+## Customizing the stack
+
+`docker-compose.yml` is overwritten on every `git pull`, so don't edit it
+directly. Put changes in a `docker-compose.override.yml` next to it — Compose
+merges it automatically and `git pull` never touches it (it's gitignored).
+
+```yaml
+# docker-compose.override.yml
+services:
+  portal:
+    ports:
+      - "8080:3000"
+    mem_limit: 2g
+```
+
+Then `docker compose up -d` as usual. Preview the merged result with
+`docker compose config`.
 
 ## Useful commands
 
