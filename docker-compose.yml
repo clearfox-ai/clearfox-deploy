@@ -1,0 +1,307 @@
+services:
+  portal:
+    image: docker.clearfox.ai/portal:${IMAGE_TAG:-latest}
+    ports:
+      - "${CLEARFOX_PORT:-3000}:3000"
+    environment:
+      - HOSTNAME=0.0.0.0
+      - PORTAL_MONGO_URI=mongodb://mongodb:27017/clearfox
+      - PORTAL_SECRETS_KEY
+      - PORTAL_INTERNAL_AUTH_KEY
+    volumes:
+      # On-disk cache for TS-native integrations (git clones, etc.).
+      - integration_data:/app/integration-data
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    # Give the portal time to drain in-flight chat streams on redeploy before
+    # Docker SIGKILLs it (default is 10s). Matches beginShutdown's 25s budget.
+    stop_grace_period: 30s
+
+  mongodb:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # --- MCP servers ---
+  # Integration configs are managed via Admin UI → Integrations.
+  # No environment variables needed — credentials stored in MongoDB.
+
+  mcp-mongodb:
+    image: docker.clearfox.ai/mcp-mongodb:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-mysql:
+    image: docker.clearfox.ai/mcp-mysql:${IMAGE_TAG:-latest}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-google-analytics:
+    image: docker.clearfox.ai/mcp-google-analytics:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-bigquery:
+    image: docker.clearfox.ai/mcp-bigquery:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-code:
+    image: docker.clearfox.ai/mcp-code:${IMAGE_TAG:-latest}
+    volumes:
+      - repos:/app/repos
+      - chroma_db:/app/chroma_db
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-fetch:
+    image: docker.clearfox.ai/mcp-fetch:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-search:
+    image: docker.clearfox.ai/mcp-search:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-sequential-thinking:
+    image: docker.clearfox.ai/mcp-sequential-thinking:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-human-input:
+    image: docker.clearfox.ai/mcp-human-input:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-calculator:
+    image: docker.clearfox.ai/mcp-calculator:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-code-interpreter:
+    image: docker.clearfox.ai/mcp-code-interpreter:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    mem_limit: 1g
+    restart: on-failure
+
+  mcp-presentations:
+    image: docker.clearfox.ai/mcp-presentations:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-grafana:
+    image: docker.clearfox.ai/mcp-grafana:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-memory:
+    image: docker.clearfox.ai/mcp-memory:${IMAGE_TAG:-latest}
+    volumes:
+      - memory_data:/app/data
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+      - HF_HOME=/app/data/hf_cache
+    restart: on-failure
+
+  mcp-jira:
+    image: docker.clearfox.ai/mcp-jira:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-stripe:
+    image: docker.clearfox.ai/mcp-stripe:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-hubspot:
+    image: docker.clearfox.ai/mcp-hubspot:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-customer-io:
+    image: docker.clearfox.ai/mcp-customer-io:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-slack:
+    image: docker.clearfox.ai/mcp-slack:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-google-sheets:
+    image: docker.clearfox.ai/mcp-google-sheets:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-bamboohr:
+    image: docker.clearfox.ai/mcp-bamboohr:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-postgresql:
+    image: docker.clearfox.ai/mcp-postgresql:${IMAGE_TAG:-latest}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-hibob:
+    image: docker.clearfox.ai/mcp-hibob:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-odoo:
+    image: docker.clearfox.ai/mcp-odoo:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-confluence:
+    image: docker.clearfox.ai/mcp-confluence:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-make:
+    image: docker.clearfox.ai/mcp-make:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-zapier:
+    image: docker.clearfox.ai/mcp-zapier:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-telegram:
+    image: docker.clearfox.ai/mcp-telegram:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-ms-calendar:
+    image: docker.clearfox.ai/mcp-ms-calendar:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-gmail:
+    image: docker.clearfox.ai/mcp-gmail:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-ms-mail:
+    image: docker.clearfox.ai/mcp-ms-mail:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-cloudflare:
+    image: docker.clearfox.ai/mcp-cloudflare:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-datadog:
+    image: docker.clearfox.ai/mcp-datadog:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-bitrix:
+    image: docker.clearfox.ai/mcp-bitrix:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-git:
+    image: docker.clearfox.ai/mcp-git:${IMAGE_TAG:-latest}
+    volumes:
+      - repos:/app/repos
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-freshservice:
+    image: docker.clearfox.ai/mcp-freshservice:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  mcp-notion:
+    image: docker.clearfox.ai/mcp-notion:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
+  agent-scheduler:
+    image: alpine:3.19
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache curl > /dev/null 2>&1
+        echo "[agent-scheduler] Starting. Polling every 60s."
+        trap 'exit 0' TERM INT
+        while true; do
+          if [ -n "$$PORTAL_INTERNAL_AUTH_KEY" ]; then
+            curl -sf -H "Authorization: Bearer $$PORTAL_INTERNAL_AUTH_KEY" \
+              "http://portal:3000/api/internal/agent/cron" || true
+          fi
+          sleep 60 &
+          wait $!
+        done
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    depends_on:
+      portal:
+        condition: service_healthy
+    stop_grace_period: 3s
+    restart: unless-stopped
+
+volumes:
+  repos:
+  chroma_db:
+  memory_data:
+  integration_data:
+  mongo_data:
