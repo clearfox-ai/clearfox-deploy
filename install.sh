@@ -14,9 +14,11 @@ REGISTRY="docker.clearfox.ai"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PORT="${CLEARFOX_PORT:-3000}"
 
-# Colors (disabled if not a terminal)
+# Colors (disabled if not a terminal). Stored as real escape bytes via printf so
+# they render even when placed inside a printf %s argument (not just the format).
 if [ -t 1 ]; then
-  RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+  RED=$(printf '\033[0;31m'); GREEN=$(printf '\033[0;32m'); YELLOW=$(printf '\033[0;33m')
+  CYAN=$(printf '\033[0;36m'); BOLD=$(printf '\033[1m'); NC=$(printf '\033[0m')
 else
   RED=''; GREEN=''; YELLOW=''; CYAN=''; BOLD=''; NC=''
 fi
@@ -204,7 +206,9 @@ if [ ! -f .env ]; then
   INTERNAL_KEY=$(openssl rand -hex 32)
   sed -i "s|^# PORTAL_SECRETS_KEY=.*|PORTAL_SECRETS_KEY=${SECRETS_KEY}|" .env
   sed -i "s|^# PORTAL_INTERNAL_AUTH_KEY=.*|PORTAL_INTERNAL_AUTH_KEY=${INTERNAL_KEY}|" .env
-  ok ".env created (keep it safe — secrets are not recoverable)"
+  # Warn at the very end (not here) so the "keep it safe" notice isn't buried in install logs.
+  ENV_CREATED=1
+  ok ".env created with fresh secrets"
 else
   ok ".env already present (preserved)"
 fi
@@ -231,6 +235,11 @@ fi
 printf "\n${GREEN}${BOLD}ClearFox is running!${NC}\n\n"
 printf "  Open ${BOLD}http://localhost:${PORT}${NC} to complete the setup wizard.\n\n"
 printf "  ${BOLD}Set up HTTPS (recommended):${NC}\n"
-printf "    sudo ./install.sh caddy ai.yourcompany.com\n\n"
+printf "    sudo ./install.sh caddy ${BOLD}<YOURDOMAIN>${NC}\n\n"
 printf "  ${BOLD}Update later:${NC}\n"
 printf "    git pull && %s pull && %s up -d\n\n" "$COMPOSE" "$COMPOSE"
+
+# Last line on purpose: a freshly generated .env holds unrecoverable secrets.
+if [ -n "${ENV_CREATED:-}" ]; then
+  printf "${RED}${BOLD}⚠ Back up your .env now — its secrets are not recoverable. Losing it means losing access to all encrypted data.${NC}\n\n"
+fi
