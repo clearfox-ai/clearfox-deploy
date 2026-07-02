@@ -249,6 +249,12 @@ services:
       - PORTAL_INTERNAL_AUTH_KEY
     restart: on-failure
 
+  mcp-sentry:
+    image: docker.clearfox.ai/mcp-sentry:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
   mcp-bitrix:
     image: docker.clearfox.ai/mcp-bitrix:${IMAGE_TAG:-latest}
     environment:
