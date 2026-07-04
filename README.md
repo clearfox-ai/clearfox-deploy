@@ -15,12 +15,15 @@ images from the private registry `docker.clearfox.ai`.
 ```bash
 git clone https://github.com/clearfox-ai/clearfox-deploy /opt/clearfox
 cd /opt/clearfox
-sudo REGISTRY_USER=<your-username> REGISTRY_PASSWORD=<your-password> ./install.sh
+sudo ./install.sh
 ```
 
-The installer logs in to the registry, generates a local `.env` with fresh
-secrets, pulls the images, and starts the stack. When it finishes, open
-`http://localhost:3000` to run the setup wizard.
+The installer asks for your registry username and password, logs in, generates
+a local `.env` with fresh secrets, pulls the images, and starts the stack. When
+it finishes, open `http://localhost:3000` to run the setup wizard.
+
+For non-interactive (scripted) installs, pass the credentials via env vars
+instead: `sudo REGISTRY_USER=<user> REGISTRY_PASSWORD=<pass> ./install.sh`.
 
 ### Manual setup (without the installer)
 

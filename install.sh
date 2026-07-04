@@ -6,8 +6,11 @@
 # the stack. Afterwards, update with:  git pull && docker compose pull && docker compose up -d
 #
 # Usage:
-#   sudo REGISTRY_USER=acme REGISTRY_PASSWORD=secret ./install.sh   — install / update
-#   sudo ./install.sh caddy ai.company.com                          — set up HTTPS
+#   sudo ./install.sh                        — install / update (asks for registry credentials if needed)
+#   sudo ./install.sh caddy ai.company.com   — set up HTTPS
+#
+# Non-interactive installs can pass credentials via env:
+#   sudo REGISTRY_USER=acme REGISTRY_PASSWORD=secret ./install.sh
 set -e
 
 REGISTRY="docker.clearfox.ai"
@@ -189,13 +192,29 @@ cd "$SCRIPT_DIR"
 [ -f docker-compose.yml ] || fail "docker-compose.yml not found in $SCRIPT_DIR — run this from the cloned repo."
 
 # --- Registry login (required on first install) ---
+# Credentials come from env vars (scripted installs) or an interactive prompt.
+# If the registry already accepts us (previous docker login persisted), no credentials needed —
+# manifest inspect checks auth without downloading the image.
+if [ -z "$REGISTRY_USER" ] || [ -z "$REGISTRY_PASSWORD" ]; then
+  if docker manifest inspect "$REGISTRY/portal:latest" >/dev/null 2>&1; then
+    ok "Already logged in to ${REGISTRY}"
+  elif [ -t 0 ]; then
+    info "Registry login — enter the credentials we sent you during onboarding."
+    printf "  Username: "; read -r REGISTRY_USER
+    # Hide password while typing; restore echo right after.
+    printf "  Password: "; stty -echo 2>/dev/null || true
+    read -r REGISTRY_PASSWORD; stty echo 2>/dev/null || true; printf "\n"
+    [ -n "$REGISTRY_USER" ] && [ -n "$REGISTRY_PASSWORD" ] || fail "Username and password are required"
+  else
+    fail "Not logged in to ${REGISTRY}. Run in a terminal, or: sudo REGISTRY_USER=<user> REGISTRY_PASSWORD=<pass> ./install.sh"
+  fi
+fi
+
 if [ -n "$REGISTRY_USER" ] && [ -n "$REGISTRY_PASSWORD" ]; then
   info "Logging in to ${REGISTRY}..."
   echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin \
     || fail "Registry login failed — check the credentials we sent you."
   ok "Logged in to ${REGISTRY}"
-elif ! docker pull "$REGISTRY/portal:latest" >/dev/null 2>&1; then
-  fail "Not logged in to ${REGISTRY}. Re-run with: sudo REGISTRY_USER=<user> REGISTRY_PASSWORD=<pass> ./install.sh"
 fi
 
 # --- Generate .env with local secrets on first install ---
