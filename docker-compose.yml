@@ -231,6 +231,12 @@ services:
       - PORTAL_INTERNAL_AUTH_KEY
     restart: on-failure
 
+  mcp-google-calendar:
+    image: docker.clearfox.ai/mcp-google-calendar:${IMAGE_TAG:-latest}
+    environment:
+      - PORTAL_INTERNAL_AUTH_KEY
+    restart: on-failure
+
   mcp-ms-mail:
     image: docker.clearfox.ai/mcp-ms-mail:${IMAGE_TAG:-latest}
     environment:
