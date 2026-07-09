@@ -1,28 +1,34 @@
 # MCP servers share 6 grouped images; each service picks its server via `command`.
 # Integration configs are managed via Admin UI → Integrations.
 # No environment variables needed — credentials stored in MongoDB.
+# mem_limit caps protect the host from one leaking/runaway server — thin HTTP
+# wrappers idle at ~100MB, ml (torch + embedding model) needs headroom.
 x-mcp-core: &mcp-core
   image: docker.clearfox.ai/mcp-core:${IMAGE_TAG:-latest}
   environment:
     - PORTAL_INTERNAL_AUTH_KEY
+  mem_limit: 512m
   restart: on-failure
 
 x-mcp-db: &mcp-db
   image: docker.clearfox.ai/mcp-db:${IMAGE_TAG:-latest}
   environment:
     - PORTAL_INTERNAL_AUTH_KEY
+  mem_limit: 512m
   restart: on-failure
 
 x-mcp-google: &mcp-google
   image: docker.clearfox.ai/mcp-google:${IMAGE_TAG:-latest}
   environment:
     - PORTAL_INTERNAL_AUTH_KEY
+  mem_limit: 512m
   restart: on-failure
 
 x-mcp-ml: &mcp-ml
   image: docker.clearfox.ai/mcp-ml:${IMAGE_TAG:-latest}
   environment:
     - PORTAL_INTERNAL_AUTH_KEY
+  mem_limit: 2g
   restart: on-failure
 
 services:
@@ -142,6 +148,10 @@ services:
     <<: *mcp-core
     command: ["python", "ms-mail/server.py"]
 
+  mcp-ms-teams:
+    <<: *mcp-core
+    command: ["python", "ms-teams/server.py"]
+
   mcp-notion:
     <<: *mcp-core
     command: ["python", "notion/server.py"]
@@ -241,6 +251,7 @@ services:
     image: docker.clearfox.ai/mcp-presentations:${IMAGE_TAG:-latest}
     environment:
       - PORTAL_INTERNAL_AUTH_KEY
+    mem_limit: 1g
     restart: on-failure
 
   agent-scheduler:
