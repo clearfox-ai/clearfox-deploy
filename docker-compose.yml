@@ -112,6 +112,10 @@ services:
     volumes:
       - repos:/app/repos
 
+  mcp-gitlab:
+    <<: *mcp-core
+    command: ["python", "gitlab/server.py"]
+
   mcp-google-analytics:
     <<: *mcp-core
     command: ["python", "google-analytics/server.py"]
@@ -159,6 +163,10 @@ services:
   mcp-odoo:
     <<: *mcp-core
     command: ["python", "odoo/server.py"]
+
+  mcp-rest-api:
+    <<: *mcp-core
+    command: ["python", "rest-api/server.py"]
 
   mcp-search:
     <<: *mcp-core
