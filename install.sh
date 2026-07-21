@@ -154,11 +154,47 @@ suggest_docker_install() {
   esac
 }
 
+# Install Docker Engine + Compose plugin. Assumes root (checked by caller).
+install_docker() {
+  case "$OS_ID $OS_LIKE" in
+    *alpine*)
+      apk add --no-cache docker docker-cli-compose
+      rc-update add docker default
+      service docker start ;;
+    *arch*)
+      pacman -S --noconfirm docker docker-compose
+      systemctl enable --now docker ;;
+    *)
+      # Debian/Ubuntu/Fedora/RHEL/CentOS/Rocky/Alma and other systemd distros.
+      curl -fsSL https://get.docker.com | sh
+      systemctl enable --now docker 2>/dev/null || true ;;
+  esac
+}
+
 if ! command -v docker >/dev/null 2>&1; then
-  printf "${RED}✗ Docker is not installed.${NC}\n" >&2
-  printf "  Install it with:\n" >&2
-  suggest_docker_install >&2
-  exit 1
+  warn "Docker is not installed."
+  # Auto-install needs root; only offer when we can actually do it interactively.
+  if [ "$(id -u)" -eq 0 ] && [ -t 0 ]; then
+    info "This installer can install Docker for you (via https://get.docker.com or your package manager)."
+    printf "  Install Docker automatically now? [Y/n] "
+    read -r REPLY
+    case "$REPLY" in
+      [Nn]*)
+        printf "  Install it manually with:\n" >&2
+        suggest_docker_install >&2
+        exit 1 ;;
+    esac
+    info "Installing Docker..."
+    install_docker
+    command -v docker >/dev/null 2>&1 \
+      || fail "Docker installation did not complete. Install it manually: https://docs.docker.com/engine/install/"
+    ok "Docker installed"
+  else
+    printf "  Install it with:\n" >&2
+    suggest_docker_install >&2
+    [ "$(id -u)" -ne 0 ] && printf "  ...or re-run as root to install it automatically: ${BOLD}sudo $0${NC}\n" >&2
+    exit 1
+  fi
 fi
 
 if docker compose version >/dev/null 2>&1; then
