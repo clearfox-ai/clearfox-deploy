@@ -3,7 +3,8 @@
 #
 # This repo (docker-compose.yml + .env) is the customer's deployment. Run the
 # installer once to log in to the registry, generate local secrets, and start
-# the stack. Afterwards, update with:  git pull && docker compose pull && docker compose up -d
+# the stack. Afterwards, update with:
+#   git pull && docker compose pull && docker compose up -d && docker image prune -f
 #
 # Usage:
 #   sudo ./install.sh                        — install / update (asks for registry credentials if needed)
@@ -292,7 +293,7 @@ printf "  Open ${BOLD}http://localhost:${PORT}${NC} to complete the setup wizard
 printf "  ${BOLD}Set up HTTPS (recommended):${NC}\n"
 printf "    sudo ./install.sh caddy ${BOLD}<YOURDOMAIN>${NC}\n\n"
 printf "  ${BOLD}Update later:${NC}\n"
-printf "    git pull && %s pull && %s up -d\n\n" "$COMPOSE" "$COMPOSE"
+printf "    git pull && %s pull && %s up -d && docker image prune -f\n\n" "$COMPOSE" "$COMPOSE"
 
 # Last line on purpose: a freshly generated .env holds unrecoverable secrets.
 if [ -n "${ENV_CREATED:-}" ]; then

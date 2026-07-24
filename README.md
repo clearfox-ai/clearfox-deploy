@@ -53,10 +53,13 @@ cd /opt/clearfox
 git pull
 docker compose pull
 docker compose up -d
+docker image prune -f
 ```
 
 Your `.env` (with your secrets) is never overwritten. The registry login
-persists, so no need to log in again.
+persists, so no need to log in again. The `prune` removes old image versions
+left behind by the pull — without it they accumulate and eventually fill
+the disk.
 
 ## Customizing the stack
 
