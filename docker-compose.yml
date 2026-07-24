@@ -148,6 +148,14 @@ services:
     <<: *mcp-core
     command: ["python", "ms-calendar/server.py"]
 
+  mcp-ms-excel:
+    <<: *mcp-core
+    command: ["python", "ms-excel/server.py"]
+
+  mcp-ms-files:
+    <<: *mcp-core
+    command: ["python", "ms-files/server.py"]
+
   mcp-ms-mail:
     <<: *mcp-core
     command: ["python", "ms-mail/server.py"]
