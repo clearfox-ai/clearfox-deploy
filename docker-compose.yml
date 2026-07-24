@@ -226,9 +226,21 @@ services:
     <<: *mcp-google
     command: ["python", "google-calendar/server.py"]
 
+  mcp-google-docs:
+    <<: *mcp-google
+    command: ["python", "google-docs/server.py"]
+
+  mcp-google-drive:
+    <<: *mcp-google
+    command: ["python", "google-drive/server.py"]
+
   mcp-google-sheets:
     <<: *mcp-google
     command: ["python", "google-sheets/server.py"]
+
+  mcp-google-slides:
+    <<: *mcp-google
+    command: ["python", "google-slides/server.py"]
 
   # --- ml group (torch + chromadb) ---
   mcp-code:
