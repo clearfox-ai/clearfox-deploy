@@ -3,12 +3,22 @@
 # No environment variables needed — credentials stored in MongoDB.
 # mem_limit caps protect the host from one leaking/runaway server — thin HTTP
 # wrappers idle at ~100MB, ml (torch + embedding model) needs headroom.
+
+# Docker's default json-file driver never rotates — 50 chatty containers fill
+# the host disk. 10m x 3 per service caps the whole install at ~1.5GB.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 x-mcp-core: &mcp-core
   image: docker.clearfox.ai/mcp-core:${IMAGE_TAG:-latest}
   environment:
     - PORTAL_INTERNAL_AUTH_KEY
   mem_limit: 512m
   restart: on-failure
+  logging: *logging
 
 x-mcp-db: &mcp-db
   image: docker.clearfox.ai/mcp-db:${IMAGE_TAG:-latest}
@@ -16,6 +26,7 @@ x-mcp-db: &mcp-db
     - PORTAL_INTERNAL_AUTH_KEY
   mem_limit: 512m
   restart: on-failure
+  logging: *logging
 
 x-mcp-google: &mcp-google
   image: docker.clearfox.ai/mcp-google:${IMAGE_TAG:-latest}
@@ -23,6 +34,7 @@ x-mcp-google: &mcp-google
     - PORTAL_INTERNAL_AUTH_KEY
   mem_limit: 512m
   restart: on-failure
+  logging: *logging
 
 x-mcp-ml: &mcp-ml
   image: docker.clearfox.ai/mcp-ml:${IMAGE_TAG:-latest}
@@ -30,6 +42,7 @@ x-mcp-ml: &mcp-ml
     - PORTAL_INTERNAL_AUTH_KEY
   mem_limit: 2g
   restart: on-failure
+  logging: *logging
 
 services:
   portal:
@@ -54,6 +67,7 @@ services:
       retries: 3
       start_period: 30s
     restart: unless-stopped
+    logging: *logging
     # Give the portal time to drain in-flight chat streams on redeploy before
     # Docker SIGKILLs it (default is 10s). Matches beginShutdown's 25s budget.
     stop_grace_period: 30s
@@ -68,6 +82,7 @@ services:
       timeout: 3s
       retries: 3
     restart: unless-stopped
+    logging: *logging
 
   # --- core group ---
   mcp-bamboohr:
@@ -274,6 +289,7 @@ services:
       - PORTAL_INTERNAL_AUTH_KEY
     mem_limit: 1g
     restart: on-failure
+    logging: *logging
 
   mcp-presentations:
     image: docker.clearfox.ai/mcp-presentations:${IMAGE_TAG:-latest}
@@ -281,6 +297,7 @@ services:
       - PORTAL_INTERNAL_AUTH_KEY
     mem_limit: 1g
     restart: on-failure
+    logging: *logging
 
   agent-scheduler:
     image: alpine:3.19
@@ -305,6 +322,7 @@ services:
         condition: service_healthy
     stop_grace_period: 3s
     restart: unless-stopped
+    logging: *logging
 
 volumes:
   repos:
