@@ -143,10 +143,6 @@ services:
     <<: *mcp-core
     command: ["python", "hibob/server.py"]
 
-  mcp-home-assistant:
-    <<: *mcp-core
-    command: ["python", "home-assistant/server.py"]
-
   mcp-hubspot:
     <<: *mcp-core
     command: ["python", "hubspot/server.py"]
