@@ -143,6 +143,10 @@ services:
     <<: *mcp-core
     command: ["python", "hibob/server.py"]
 
+  mcp-home-assistant:
+    <<: *mcp-core
+    command: ["python", "home-assistant/server.py"]
+
   mcp-hubspot:
     <<: *mcp-core
     command: ["python", "hubspot/server.py"]
@@ -269,6 +273,9 @@ services:
   mcp-code:
     <<: *mcp-ml
     command: ["python", "code/mcp_server.py"]
+    # ChromaDB index (50k+ chunks) + embedding model + encoding pass exceed the
+    # 2g ml default on real codebases; 2g caused a permanent OOM restart loop.
+    mem_limit: 3g
     volumes:
       - repos:/app/repos
       - chroma_db:/app/chroma_db
